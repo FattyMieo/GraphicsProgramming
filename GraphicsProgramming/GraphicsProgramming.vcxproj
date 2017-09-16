@@ -19,7 +19,16 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="demo.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="matrix.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="camera.h" />
+    <ClInclude Include="demo_base.h" />
+    <ClInclude Include="glext.h" />
+    <ClInclude Include="matrix.h" />
+    <ClInclude Include="triangle_demo.h" />
+    <ClInclude Include="vector.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{A1FF6FFC-54F0-4B69-8DE3-A8B1D5F2AB16}</ProjectGuid>

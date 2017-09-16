@@ -1,6 +1,8 @@
 #ifndef _DEMO_BASE_H
 #define _DEMO_BASE_H
 
+#include <cmath>
+#define PI 3.14159265
 //! Demo base class.
 class DemoBase
 {
