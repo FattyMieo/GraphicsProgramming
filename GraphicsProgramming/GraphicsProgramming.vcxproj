@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="lodepng.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="matrix.cpp" />
   </ItemGroup>
@@ -26,6 +27,7 @@
     <ClInclude Include="camera.h" />
     <ClInclude Include="demo_base.h" />
     <ClInclude Include="glext.h" />
+    <ClInclude Include="lodepng.h" />
     <ClInclude Include="matrix.h" />
     <ClInclude Include="triangle_demo.h" />
     <ClInclude Include="vector.h" />

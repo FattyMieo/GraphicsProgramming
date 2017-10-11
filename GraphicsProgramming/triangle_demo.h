@@ -1,13 +1,61 @@
 #ifndef _TRIANGLE_DEMO_H
 #define _TRIANGLE_DEMO_H
 
+#include <vector>
+#include <iostream>
 #include "demo_base.h"
+#include "lodepng.h"
+
+#define TEXTURE_COUNT 5
 
 class TriangleDemo : public DemoBase
 {
+private:
+	GLuint mTextureID[TEXTURE_COUNT];
+
+	void loadPNG(const char* path, GLuint textureID)
+	{
+		//Load file and decode image
+		std::vector<unsigned char> image;
+		unsigned width, height;
+		unsigned error = lodepng::decode(image, width, height, path);
+
+		//If there's an error, display it
+		if (error != 0)
+		{
+			std::cout << "png load error :" << error << ": " << lodepng_error_text(error) << std::endl;
+			return;
+		}
+
+		glBindTexture(GL_TEXTURE_2D, textureID);
+
+		//Repeat the texture after exceeding 1.0f
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); // apply texture wrapping along horizontal part
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT); // apply texture wrapping along vertical part
+
+		//Uses last pixel after exceeding 1.0f
+		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP); // apply texture wrapping along horizontal part
+		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP); // apply texture wrapping along vertical part
+
+		// bilinear filtering
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); // near filtering (For when texture needs to scale...)
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // far filtering (For when texture needs to scale...)
+
+		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); // near filtering (For when texture needs to scale...)
+		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // far filtering (For when texture needs to scale...)
+
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, &image[0]);
+	}
 public:
 	void init()
 	{
+		// To support alpha channel
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glEnable(GL_ALPHA_TEST);
+
+		glGenTextures(TEXTURE_COUNT, mTextureID);
+		loadPNG("../media/IronOre.png", mTextureID[0]);
 	}
 
 	void deinit()
@@ -47,73 +95,73 @@ public:
 		glEnd();										// Finished Drawing The Triangles
 	}
 
-	void drawCube(float size = 1.0f)
+	void drawCube(GLuint textureID, float size = 1.0f)
 	{
+		glEnable(GL_TEXTURE_2D); //Enable texturing
+		glBindTexture(GL_TEXTURE_2D, textureID);
+
 		size /= 2.0f;
 		glBegin(GL_TRIANGLES);
 
-		// Blue
-		glColor3f(0.25f, 0.25f, 1.0f);
+		// Z
 
 		// Negative Square
-		glVertex3f(-size, size, -size);
-		glVertex3f(-size, -size, -size);
-		glVertex3f(size, -size, -size);
+		glTexCoord2f(1.0f, 0.0f);	glVertex3f(-size, size, -size);
+		glTexCoord2f(1.0f, 1.0f);	glVertex3f(-size, -size, -size);
+		glTexCoord2f(0.0f, 1.0f);	glVertex3f(size, -size, -size);
 
-		glVertex3f(-size, size, -size);
-		glVertex3f(size, size, -size);
-		glVertex3f(size, -size, -size);
+		glTexCoord2f(1.0f, 0.0f);	glVertex3f(-size, size, -size);
+		glTexCoord2f(0.0f, 0.0f);	glVertex3f(size, size, -size);
+		glTexCoord2f(0.0f, 1.0f);	glVertex3f(size, -size, -size);
 
 		// Positive Square
-		glVertex3f(-size, size, size);
-		glVertex3f(-size, -size, size);
-		glVertex3f(size, -size, size);
+		glTexCoord2f(1.0f, 0.0f);	glVertex3f(-size, size, size);
+		glTexCoord2f(1.0f, 1.0f);	glVertex3f(-size, -size, size);
+		glTexCoord2f(0.0f, 1.0f);	glVertex3f(size, -size, size);
 
-		glVertex3f(-size, size, size);
-		glVertex3f(size, size, size);
-		glVertex3f(size, -size, size);
+		glTexCoord2f(1.0f, 0.0f);	glVertex3f(-size, size, size);
+		glTexCoord2f(0.0f, 0.0f);	glVertex3f(size, size, size);
+		glTexCoord2f(0.0f, 1.0f);	glVertex3f(size, -size, size);
 
-		// Green
-		glColor3f(0.25f, 1.0f, 0.25f);
+		// Y
 
 		// Negative Square
-		glVertex3f(size, -size, -size);
-		glVertex3f(-size, -size, -size);
-		glVertex3f(-size, -size, size);
+		glTexCoord2f(0.0f, 1.0f);	glVertex3f(size, -size, -size);
+		glTexCoord2f(0.0f, 0.0f);	glVertex3f(-size, -size, -size);
+		glTexCoord2f(1.0f, 0.0f);	glVertex3f(-size, -size, size);
 
-		glVertex3f(size, -size, -size);
-		glVertex3f(size, -size, size);
-		glVertex3f(-size, -size, size);
+		glTexCoord2f(0.0f, 1.0f);	glVertex3f(size, -size, -size);
+		glTexCoord2f(1.0f, 1.0f);	glVertex3f(size, -size, size);
+		glTexCoord2f(1.0f, 0.0f);	glVertex3f(-size, -size, size);
 
 		// Positive Square
-		glVertex3f(size, size, -size);
-		glVertex3f(-size, size, -size);
-		glVertex3f(-size, size, size);
+		glTexCoord2f(0.0f, 1.0f);	glVertex3f(size, size, -size);
+		glTexCoord2f(0.0f, 0.0f);	glVertex3f(-size, size, -size);
+		glTexCoord2f(1.0f, 0.0f);	glVertex3f(-size, size, size);
 
-		glVertex3f(size, size, -size);
-		glVertex3f(size, size, size);
-		glVertex3f(-size, size, size);
+		glTexCoord2f(0.0f, 1.0f);	glVertex3f(size, size, -size);
+		glTexCoord2f(1.0f, 1.0f);	glVertex3f(size, size, size);
+		glTexCoord2f(1.0f, 0.0f);	glVertex3f(-size, size, size);
 
-		// Red
-		glColor3f(1.0f, 0.25f, 0.25f);
+		// X
 
 		// Negative Square
-		glVertex3f(-size, -size, size);
-		glVertex3f(-size, -size, -size);
-		glVertex3f(-size, size, -size);
+		glTexCoord2f(0.0f, 1.0f);	glVertex3f(-size, -size, size);
+		glTexCoord2f(1.0f, 1.0f);	glVertex3f(-size, -size, -size);
+		glTexCoord2f(1.0f, 0.0f);	glVertex3f(-size, size, -size);
 
-		glVertex3f(-size, -size, size);
-		glVertex3f(-size, size, size);
-		glVertex3f(-size, size, -size);
+		glTexCoord2f(0.0f, 1.0f);	glVertex3f(-size, -size, size);
+		glTexCoord2f(0.0f, 0.0f);	glVertex3f(-size, size, size);
+		glTexCoord2f(1.0f, 0.0f);	glVertex3f(-size, size, -size);
 
 		// Positive Square
-		glVertex3f(size, -size, size);
-		glVertex3f(size, -size, -size);
-		glVertex3f(size, size, -size);
+		glTexCoord2f(0.0f, 1.0f);	glVertex3f(size, -size, size);
+		glTexCoord2f(1.0f, 1.0f);	glVertex3f(size, -size, -size);
+		glTexCoord2f(1.0f, 0.0f);	glVertex3f(size, size, -size);
 
-		glVertex3f(size, -size, size);
-		glVertex3f(size, size, size);
-		glVertex3f(size, size, -size);
+		glTexCoord2f(0.0f, 1.0f);	glVertex3f(size, -size, size);
+		glTexCoord2f(0.0f, 0.0f);	glVertex3f(size, size, size);
+		glTexCoord2f(1.0f, 0.0f);	glVertex3f(size, size, -size);
 
 		glEnd();										// Finished Drawing The Triangles
 	}
@@ -272,89 +320,15 @@ public:
 		glEnd();										// Finished Drawing The Triangles
 	}
 
-	Matrix ovalOrbiter(const Matrix& viewMatrix, float rot1, float rot2, float amplitude, float l1, float l2)
-	{
-		//Matrix Transformation
-		//Matrix translate1 = Matrix::makeTranslationMatrix(Vector(0.0f, amplitude * sin(rot1 * PI / 180.0f), 0.0f));
-		//Matrix rotate1 = Matrix::makeRotateMatrix(rot2, Vector(0.0f, 1.0f, 0.0f));
-		Matrix translate2 = Matrix::makeTranslationMatrix(Vector(l1 * cos(rot2 * PI / 180.0f), 0.0f, l2 * sin(rot2 * PI / 180.0f)));
-		//Matrix scale1 = Matrix::makeScaleMatrix(Vector(2.0f, 1.0f, 3.0f));
-
-		// NOTE on OpenGL Matrix model
-		// Screen = Proj * View * Model
-		// Model = TransformC(3rd) * TransformB(2nd) * TransformA(1st) (Transform could be Rotate, Scale, Translate, etc)
-
-		//Perform Model Transformation
-		Matrix modelMatrix = translate2;
-
-		Matrix viewSpaceMatrix = viewMatrix * modelMatrix;
-
-		return viewSpaceMatrix;
-	}
-
-	float rot1 = 0.0f;
-	float rot2 = 0.0f;
-
-	float cubeBaseAngle = 0.0f;
-
 	void draw(const Matrix& viewMatrix)
 	{
 		drawAxis(viewMatrix);
 
 		glLoadMatrixf((GLfloat*)viewMatrix.mVal);
-
+		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Show Wireframes
 
-		//drawCube();
-		//drawPyramid();
-		//drawCylinder(2.0f, 1.0f);
-		//drawCone(2.0f, 1.0f);
-
-		// Oval Orbiter
-		/*
-		rot1 += 0.1f;
-		rot2 += 0.05f;
-
-		glLoadMatrixf((GLfloat*)ovalOrbiter(viewMatrix, rot2, rot1, 2.0f, 5.0f, 2.5f).mVal);
-		drawCube();
-		*/
-
-		// "DNA" Animation
-		float radius = 2.0f;
-		float offsetY = 0.2f;
-		float offsetAngle = 30.0f;
-		int cubeAmount = 50;
-
-		for (int i = 0; i < cubeAmount; i++)
-		{
-			//Method 1 - Translate + Rotation
-			Matrix translationCube = Matrix::makeTranslationMatrix(Vector(radius, offsetY * i, 0));
-			Matrix rotationCube = Matrix::makeRotateMatrix(cubeBaseAngle - (i * offsetAngle), Vector(0, 1, 0));
-			Matrix cubeMatrix = viewMatrix * rotationCube * translationCube;
-			//glLoadMatrixf((GLfloat*)cubeMatrix.mVal);
-
-			//Method 2 - Use circle formula
-			Matrix magicMatrix = Matrix::makeTranslationMatrix(Vector(cosf((cubeBaseAngle - (i * offsetAngle)) * PI / 180.0f) * radius, offsetY * i, sinf((cubeBaseAngle - (i * offsetAngle)) * PI / 180.0f) * radius));
-			glLoadMatrixf((GLfloat*)(viewMatrix * magicMatrix).mVal);
-
-			drawCube(0.5f);
-		}
-
-		cubeBaseAngle += 0.05f;
-
-
-		/*Example for sequences of tranforms*/
-		/*
-		Matrix modelMatrix1;
-		Matrix viewSpaceMatrix = viewMatrix * modelMatrix1;
-		glLoadMatrixf((GLfloat*)viewSpaceMatrix.mVal);
-		drawCube(); //This cube is affected by the last applied matrix
-
-		Matrix modelMatrix2;
-		Matrix viewSpaceMatrix = viewMatrix * modelMatrix2;
-		glLoadMatrixf((GLfloat*)viewSpaceMatrix.mVal);
-		drawCube(); //This cube is affected by the last applied matrix
-		*/
+		drawCube(mTextureID[0], 3.0f);
 	}
 };
 
