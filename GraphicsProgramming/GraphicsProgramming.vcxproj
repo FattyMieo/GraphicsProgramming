@@ -27,6 +27,7 @@
     <ClInclude Include="demo_base.h" />
     <ClInclude Include="glext.h" />
     <ClInclude Include="matrix.h" />
+    <ClInclude Include="pokemon_demo.h" />
     <ClInclude Include="triangle_demo.h" />
     <ClInclude Include="vector.h" />
   </ItemGroup>

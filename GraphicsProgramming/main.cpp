@@ -8,6 +8,7 @@
 #include "vector.h"
 
 #include "triangle_demo.h"
+#include "pokemon_demo.h"
 
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 600
@@ -92,7 +93,7 @@ int main()
 	Matrix rotateMatrix(Matrix::makeRotateMatrix(0.5f, Vector(0.0f, 1.0f, 0.0f)));
 
 	// initialize demo.
-	DemoBase* demo = new TriangleDemo();
+	DemoBase* demo = new PokemonDemo();
 	demo->init();
 
 	// Main loop
