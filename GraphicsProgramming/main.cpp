@@ -79,9 +79,12 @@ int main()
 	glfwSetCursorPosCallback(window, onMouseMove);
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
+	glfwSwapInterval(1);								// Control intervals (Turn on VSync)
+	//glfwSwapInterval(0);								// Control intervals (Turn off VSync)
+
 	// initialize OpenGL.
 	glShadeModel(GL_SMOOTH);							// Enable Smooth Shading
-	glClearColor(0.0f, 0.0f, 0.0f, 0.5f);				// Black Background
+	glClearColor(1.0f, 1.0f, 1.0f, 0.5f);				// White Background
 	glClearDepth(1.0f);									// Depth Buffer Setup
 	glEnable(GL_DEPTH_TEST);							// Enables Depth Testing
 	glDepthFunc(GL_LEQUAL);								// The Type Of Depth Testing To Do
@@ -104,10 +107,10 @@ int main()
 
 		// Simple camera controller. (KEYBOARD)
 		float camMoveOffsetX = 0.0f, camMoveOffsetZ = 0.0f;
-		if(glfwGetKey(window, 'A')) camMoveOffsetX -= 0.002f;
-		if(glfwGetKey(window, 'D')) camMoveOffsetX += 0.002f;
-		if(glfwGetKey(window, 'W')) camMoveOffsetZ -= 0.002f;
-		if(glfwGetKey(window, 'S')) camMoveOffsetZ += 0.002f;
+		if(glfwGetKey(window, 'A')) camMoveOffsetX -= 0.02f;
+		if(glfwGetKey(window, 'D')) camMoveOffsetX += 0.02f;
+		if(glfwGetKey(window, 'W')) camMoveOffsetZ -= 0.02f;
+		if(glfwGetKey(window, 'S')) camMoveOffsetZ += 0.02f;
 		gCamera.translateLocal(camMoveOffsetX, 0.0f, camMoveOffsetZ);
 
 		// Check if ESC key was pressed
