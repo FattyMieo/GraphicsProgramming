@@ -6,7 +6,7 @@
 #include "demo_base.h"
 #include "lodepng.h"
 
-#define TEXTURE_COUNT 5
+#define TEXTURE_COUNT 6
 
 class TriangleDemo : public DemoBase
 {
@@ -55,7 +55,8 @@ public:
 		glEnable(GL_ALPHA_TEST);
 
 		glGenTextures(TEXTURE_COUNT, mTextureID);
-		loadPNG("../media/IronOre.png", mTextureID[0]);
+		loadPNG("../media/Retina.png", mTextureID[0]);
+		loadPNG("../media/IronOre.png", mTextureID[1]);
 	}
 
 	void deinit()
@@ -328,7 +329,40 @@ public:
 		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Show Wireframes
 
+		glDisable(GL_BLEND);
+		glDisable(GL_ALPHA_TEST);
+
+		drawCube(mTextureID[1], 50.0f);
+		//Matrix forward = Matrix::makeTranslationMatrix(Vector(5.0f, 0.0f, 0.0f));
+		//Matrix backward = Matrix::makeTranslationMatrix(Vector(-5.0f, 0.0f, 0.0f));
+
+		//glLoadMatrixf((GLfloat*)(viewMatrix * forward).mVal);
+		//drawCube(mTextureID[1], 5.0f);
+		//glLoadMatrixf((GLfloat*)(viewMatrix * backward).mVal);
+		//drawCube(mTextureID[1], 5.0f);
+		//glLoadMatrixf((GLfloat*)(viewMatrix).mVal);
+
+		glEnable(GL_BLEND);
+		glEnable(GL_ALPHA_TEST);
+
+		//Alpha Blend
+		//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+		//Additive Blend
+		//glBlendFunc(GL_ONE, GL_ONE);
+
+		//Additive Blend???
+		//glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+
+		//Multiply Blend (also is called Modulate) //Needs another opaque object to see
+		glBlendFunc(GL_ZERO, GL_SRC_COLOR);
+		//glBlendFunc(GL_DST_COLOR, GL_ZERO);
+
+		glDepthMask(false); //Ignore the depth mask, for semi-transparent objects
+
 		drawCube(mTextureID[0], 3.0f);
+
+		glDepthMask(true);
 	}
 };
 
