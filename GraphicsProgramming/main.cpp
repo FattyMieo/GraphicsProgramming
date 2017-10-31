@@ -84,7 +84,7 @@ int main()
 
 	// initialize OpenGL.
 	glShadeModel(GL_SMOOTH);							// Enable Smooth Shading
-	glClearColor(1.0f, 1.0f, 1.0f, 0.5f);				// White Background
+	glClearColor(0.5f, 0.5f, 0.5f, 0.5f);				// Gray Background
 	glClearDepth(1.0f);									// Depth Buffer Setup
 	glEnable(GL_DEPTH_TEST);							// Enables Depth Testing
 	glDepthFunc(GL_LEQUAL);								// The Type Of Depth Testing To Do
