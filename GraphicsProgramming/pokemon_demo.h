@@ -452,7 +452,7 @@ public:
 
 		glLoadMatrixf((GLfloat*)viewMatrix.mVal);
 
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Show Wireframes
+		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Show Wireframes
 
 		float radius = 1.0f;
 
@@ -894,7 +894,7 @@ public:
 		//glColor3f(1.0f, 1.0f, 0.0f);
 		//glLoadMatrixf((GLfloat*)(viewMatrix * mTail5).mVal);
 		//drawCube();
-
+		
 		if (earDir)
 		{
 			if (earAngle < 40.0f)
@@ -1227,6 +1227,7 @@ public:
 		glEnd();
 
 		glLoadMatrixf((GLfloat*)(viewMatrix).mVal);
+		
 	}
 };
 
