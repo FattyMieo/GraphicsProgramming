@@ -8,6 +8,67 @@
 
 #define TEXTURE_COUNT 6
 
+const int RECT_VERTEX_ARRAY_SIZE = 0;
+
+class Wave
+{
+private: 
+	//GLfloat mRectVertices[RECT_VERTEX_ARRAY_SIZE];
+	float delta = 0.0f;
+
+	float getY(float j)
+	{
+		return amplitude * sinf(delta + (j * frequency));
+	}
+
+public:
+	float speed;
+	float amplitude;
+	float frequency;
+	float size;
+	int iterationPerUnit;
+
+	Wave(float speed, float amplitude, float frequency, float size = 1.0f, int iterationPerMeter = 10)
+	{
+		this->speed = speed;
+		this->amplitude = amplitude;
+		this->frequency = frequency;
+		this->size = size;
+		this->iterationPerUnit = iterationPerMeter;
+	}
+
+	void draw()
+	{
+		float halfSize = size / 2.0f;
+		float increment = 1.0f / iterationPerUnit;
+
+		for (float i = -halfSize; i < halfSize - increment; i += increment)
+		{
+			for (float j = -halfSize; j < halfSize - increment; j += increment)
+			{
+				glBegin(GL_TRIANGLES);
+
+				glVertex3f(j, getY(j), i);
+				glVertex3f(j, getY(j), i + increment);
+				glVertex3f(j + increment, getY(j + increment), i);
+
+				glVertex3f(j + increment, getY(j + increment), i + increment);
+				glVertex3f(j + increment, getY(j + increment), i);
+				glVertex3f(j, getY(j), i + increment);
+
+				glEnd();
+			}
+		}
+	}
+
+	void animate()
+	{
+		delta += speed;
+		std::cout << "Delta = " << delta << std::endl;
+		draw();
+	}
+};
+
 class TriangleDemo : public DemoBase
 {
 private:
@@ -94,6 +155,141 @@ public:
 		glVertex3f(2.0f, -1.0f, 0.0f);					// Bottom Right
 
 		glEnd();										// Finished Drawing The Triangles
+	}
+
+	void drawCubeVertexArray(GLuint textureID, float size = 1.0f)
+	{
+		glEnable(GL_TEXTURE_2D); //Enable texturing
+		glBindTexture(GL_TEXTURE_2D, textureID);
+
+		size /= 2.0f;
+
+		GLfloat vertices[] =
+		{
+			-size, -size, size,
+			size, -size, size,
+			size, size, size,
+
+			size, size, size,
+			-size, size, size,
+			-size, -size, size,
+
+			-size, -size, -size,
+			size, -size, -size,
+			size, size, -size,
+
+			size, size, -size,
+			-size, size, -size,
+			-size, -size, -size
+		};
+
+		GLfloat texCoordsZ[] =
+		{
+			1.0f, 1.0f,
+			0.0f, 1.0f,
+			0.0f, 0.0f,
+
+			0.0f, 0.0f,
+			1.0f, 0.0f,
+			1.0f, 1.0f,
+
+			1.0f, 1.0f,
+			0.0f, 1.0f,
+			0.0f, 0.0f,
+
+			0.0f, 0.0f,
+			1.0f, 0.0f,
+			1.0f, 1.0f
+		};
+
+		GLfloat texCoordsY[] =
+		{
+			0.0f, 0.0f,
+			1.0f, 0.0f,
+			1.0f, 1.0f,
+
+			1.0f, 1.0f,
+			0.0f, 1.0f,
+			0.0f, 0.0f,
+
+			0.0f, 0.0f,
+			1.0f, 0.0f,
+			1.0f, 1.0f,
+
+			1.0f, 1.0f,
+			0.0f, 1.0f,
+			0.0f, 0.0f
+		};
+
+		GLfloat texCoordsX[] =
+		{
+			1.0f, 1.0f,
+			1.0f, 0.0f,
+			0.0f, 0.0f,
+
+			0.0f, 0.0f,
+			0.0f, 1.0f,
+			1.0f, 1.0f,
+
+			1.0f, 1.0f,
+			1.0f, 0.0f,
+			0.0f, 0.0f,
+
+			0.0f, 0.0f,
+			0.0f, 1.0f,
+			1.0f, 1.0f
+		};
+
+		GLubyte colors[] =
+		{
+			255, 255, 255,
+			255, 0, 0,
+			0, 255, 0,
+
+			0, 255, 0,
+			255, 0, 0,
+			255, 255, 255,
+
+			255, 255, 255,
+			255, 0, 0,
+			0, 255, 0,
+
+			0, 255, 0,
+			255, 0, 0,
+			255, 255, 255
+		};
+
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		glEnableClientState(GL_COLOR_ARRAY);
+		int c = 0;
+		while (c < 3)
+		{
+			glColorPointer(3, GL_UNSIGNED_BYTE, 0, colors);
+			glVertexPointer(3, GL_FLOAT, 0, vertices);
+			glTexCoordPointer(2, GL_FLOAT, 0, (c == 0 ? texCoordsZ : (c == 1 ? texCoordsY : texCoordsX)));
+			glDrawArrays(GL_TRIANGLES, 0, 12);
+
+			c++;
+			if (c >= 3) break;
+
+			float vZero = 0.0f;
+			for (int i = 0; i < 6; i++)
+			{
+				vZero = vertices[0 + 3 * i];
+				vertices[0 + 3 * i] = vertices[1 + 3 * i];
+				vertices[1 + 3 * i] = vertices[2 + 3 * i];
+				vertices[2 + 3 * i] = vZero;
+
+				vZero = vertices[(0 + 3 * i) + 18];
+				vertices[(0 + 3 * i) + 18] = vertices[(1 + 3 * i) + 18];
+				vertices[(1 + 3 * i) + 18] = vertices[(2 + 3 * i) + 18];
+				vertices[(2 + 3 * i) + 18] = vZero;
+			}
+		}
+		glDisableClientState(GL_VERTEX_ARRAY);
+		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+		glDisableClientState(GL_COLOR_ARRAY);
 	}
 
 	void drawCube(GLuint textureID, float size = 1.0f)
@@ -321,48 +517,83 @@ public:
 		glEnd();										// Finished Drawing The Triangles
 	}
 
+	Wave wave = Wave(0.01f, 0.05f, 5.0f, 10.0f, 10);
+
 	void draw(const Matrix& viewMatrix)
 	{
 		drawAxis(viewMatrix);
 
 		glLoadMatrixf((GLfloat*)viewMatrix.mVal);
 		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Show Wireframes
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Show Wireframes
 
-		glDisable(GL_BLEND);
-		glDisable(GL_ALPHA_TEST);
+		wave.animate();
 
-		drawCube(mTextureID[1], 50.0f);
-		//Matrix forward = Matrix::makeTranslationMatrix(Vector(5.0f, 0.0f, 0.0f));
-		//Matrix backward = Matrix::makeTranslationMatrix(Vector(-5.0f, 0.0f, 0.0f));
+		//glDisable(GL_BLEND);
+		//glDisable(GL_ALPHA_TEST);
 
-		//glLoadMatrixf((GLfloat*)(viewMatrix * forward).mVal);
-		//drawCube(mTextureID[1], 5.0f);
-		//glLoadMatrixf((GLfloat*)(viewMatrix * backward).mVal);
-		//drawCube(mTextureID[1], 5.0f);
-		//glLoadMatrixf((GLfloat*)(viewMatrix).mVal);
+		////Display List Method
+		///*
+		//glBegin(GL_TRIANGLES);
 
-		glEnable(GL_BLEND);
-		glEnable(GL_ALPHA_TEST);
+		//glVertex3f(size, size, size);
+		//....
 
-		//Alpha Blend
-		//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		//glEnd();
+		//*/
 
-		//Additive Blend
-		//glBlendFunc(GL_ONE, GL_ONE);
+		////Vertex Array Method (cheaper than Display List Method)
+		///*
+		//GLfloat vertices[] =
+		//{
+		//	-1.0f, -1.0f, 1.0f,
+		//	1.0f, -1.0f, 1.0f,
+		//	1.0f, 1.0f, 1.0f,
 
-		//Additive Blend???
-		//glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+		//	1.0f, 1.0f, 1.0f,
+		//	-1.0f, 1.0f, 1.0f,
+		//	-1.0f, -1.0f, 1.0f
+		//};
 
-		//Multiply Blend (also is called Modulate) //Needs another opaque object to see
-		glBlendFunc(GL_ZERO, GL_SRC_COLOR);
-		//glBlendFunc(GL_DST_COLOR, GL_ZERO);
+		//glEnableClientState(GL_VERTEX_ARRAY);
+		//glVertexPointer(3, GL_FLOAT, 0, vertices);
+		//glDrawArrays(GL_TRIANGLES, 0, 6);
+		//*/
 
-		glDepthMask(false); //Ignore the depth mask, for semi-transparent objects
+		//drawCubeVertexArray(mTextureID[1], 1.0f);
 
-		drawCube(mTextureID[0], 3.0f);
+		////  drawCube(mTextureID[1], 50.0f);
 
-		glDepthMask(true);
+		////Matrix forward = Matrix::makeTranslationMatrix(Vector(5.0f, 0.0f, 0.0f));
+		////Matrix backward = Matrix::makeTranslationMatrix(Vector(-5.0f, 0.0f, 0.0f));
+
+		////glLoadMatrixf((GLfloat*)(viewMatrix * forward).mVal);
+		////drawCube(mTextureID[1], 5.0f);
+		////glLoadMatrixf((GLfloat*)(viewMatrix * backward).mVal);
+		////drawCube(mTextureID[1], 5.0f);
+		////glLoadMatrixf((GLfloat*)(viewMatrix).mVal);
+
+		//glEnable(GL_BLEND);
+		//glEnable(GL_ALPHA_TEST);
+
+		////Alpha Blend
+		////glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+		////Additive Blend
+		////glBlendFunc(GL_ONE, GL_ONE);
+
+		////Additive Blend???
+		////glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+
+		////Multiply Blend (also is called Modulate) //Needs another opaque object to see
+		//glBlendFunc(GL_ZERO, GL_SRC_COLOR);
+		////glBlendFunc(GL_DST_COLOR, GL_ZERO);
+
+		//glDepthMask(false); //Ignore the depth mask, for semi-transparent objects
+
+		////  drawCube(mTextureID[0], 3.0f);
+
+		//glDepthMask(true);
 	}
 };
 
