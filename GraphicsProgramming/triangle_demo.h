@@ -5,10 +5,26 @@
 #include <iostream>
 #include "demo_base.h"
 #include "lodepng.h"
+#include <fmod.hpp>
+#include <fmod_errors.h>
 
 #define TEXTURE_COUNT 6
 
+//Must be power of 2
+#define SPECTRUM_SIZE 1024
+
+void ERRCHECK(FMOD_RESULT result)
+{
+	if (result != FMOD_OK)
+	{
+		printf("FMOD error! (%d) %s\n", result, FMOD_ErrorString(result));
+	}
+}
+
 const int RECT_VERTEX_ARRAY_SIZE = 0;
+
+float m_spectrumLeft[SPECTRUM_SIZE];
+float m_spectrumRight[SPECTRUM_SIZE];
 
 class Wave
 {
@@ -30,6 +46,11 @@ private:
 	float getY(float j)
 	{
 		return amplitude * sinf(delta + (j * frequency));
+	}
+
+	float getY(float j, float left, float right)
+	{
+		return left + right / 2;
 	}
 
 public:
@@ -82,7 +103,7 @@ public:
 
 					x + inc	, getY(x + inc)	, z + inc	,
 					x + inc	, getY(x + inc)	, z			,
-					x		, getY(x)		, z + inc	
+					x		, getY(x)		, z + inc
 				};
 
 				GLubyte quadColors[] =
@@ -130,7 +151,99 @@ public:
 					colors[l] = quadColors[k];
 				}
 
-				for(int k = 0; k < 12; k++)
+				for (int k = 0; k < 12; k++)
+				{
+					int l = (i * qxVertices) + (j * qVertices) + k;
+					texCoords[l] = quadTexCoords[k];
+				}
+			}
+		}
+
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		glEnableClientState(GL_COLOR_ARRAY);
+
+		glVertexPointer(3, GL_FLOAT, 0, vertices);
+		glColorPointer(3, GL_UNSIGNED_BYTE, 0, colors);
+		glTexCoordPointer(2, GL_FLOAT, 0, texCoords);
+		glDrawArrays(GL_TRIANGLES, 0, qxzVertices / 3);
+
+		glDisableClientState(GL_VERTEX_ARRAY);
+		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+		glDisableClientState(GL_COLOR_ARRAY);
+
+		glDisable(GL_TEXTURE_2D); //Disable texturing
+	}
+
+	void drawAudioVisualizer()
+	{
+		glEnable(GL_TEXTURE_2D); //Enable texturing
+		glBindTexture(GL_TEXTURE_2D, textureID);
+
+		for (int i = 0; i < size * iterationPerUnit; i++)
+		{
+			float z = -halfSize + (inc * i);
+			for (int j = 0; j < size * iterationPerUnit; j++)
+			{
+				float x = -halfSize + (inc * j);
+
+				GLfloat quadVertices[] =
+				{
+					x		, getY(x, m_spectrumLeft[j], m_spectrumLeft[j])	, z			,
+					x		, getY(x, m_spectrumLeft[j], m_spectrumLeft[j])		, z + inc	,
+					x + inc	, getY(x + inc, m_spectrumLeft[j+1], m_spectrumLeft[j+1])	, z			,
+
+					x + inc	, getY(x + inc, m_spectrumLeft[j+1], m_spectrumLeft[j+1])	, z + inc	,
+					x + inc	, getY(x + inc, m_spectrumLeft[j+1], m_spectrumLeft[j+1])	, z			,
+					x		, getY(x, m_spectrumLeft[j], m_spectrumLeft[j])		, z + inc
+				};
+
+				GLubyte quadColors[] =
+				{
+					255, 255, 255,
+					255, 0, 0,
+					0, 255, 0,
+
+					0, 255, 0,
+					255, 0, 0,
+					255, 255, 255,
+
+					255, 255, 255,
+					255, 0, 0,
+					0, 255, 0,
+
+					0, 255, 0,
+					255, 0, 0,
+					255, 255, 255
+				};
+
+				GLfloat quadTexCoords[] =
+				{
+					1.0f, 1.0f,
+					1.0f, 0.0f,
+					0.0f, 0.0f,
+
+					0.0f, 0.0f,
+					0.0f, 1.0f,
+					1.0f, 1.0f,
+
+					1.0f, 1.0f,
+					1.0f, 0.0f,
+					0.0f, 0.0f,
+
+					0.0f, 0.0f,
+					0.0f, 1.0f,
+					1.0f, 1.0f
+				};
+
+				for (int k = 0; k < 18; k++)
+				{
+					int l = (i * qxVertices) + (j * qVertices) + k;
+					vertices[l] = quadVertices[k];
+					colors[l] = quadColors[k];
+				}
+
+				for (int k = 0; k < 12; k++)
 				{
 					int l = (i * qxVertices) + (j * qVertices) + k;
 					texCoords[l] = quadTexCoords[k];
@@ -204,8 +317,54 @@ private:
 
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, &image[0]);
 	}
+
+	FMOD::System* m_fmodSystem;
+	FMOD::Sound* m_music;
+	FMOD::Channel* m_musicChannel;
+
 public:
 	Wave wave;
+
+	void initFmod()
+	{
+		FMOD_RESULT result;
+		unsigned int version;
+
+		result = FMOD::System_Create(&m_fmodSystem);
+		ERRCHECK(result);
+
+		result = m_fmodSystem->getVersion(&version);
+		ERRCHECK(result);
+
+		if (version < FMOD_VERSION)
+		{
+			printf("FMOD Error! You are using an old version of FMOD.", version, FMOD_VERSION);
+		}
+
+		//Initialise fmod system
+		result = m_fmodSystem->init(32, FMOD_INIT_NORMAL, 0);
+		ERRCHECK(result);
+
+		//Load and Set up Music
+		result = m_fmodSystem->createStream("../media/bensound-funnysong.mp3", FMOD_SOFTWARE, 0, &m_music);
+		ERRCHECK(result);
+
+		//Play the loaded mp3 music
+		result = m_fmodSystem->playSound(FMOD_CHANNEL_FREE, m_music, false, &m_musicChannel);
+		ERRCHECK(result);
+	}
+
+	void updateFmod()
+	{
+		m_fmodSystem->update();
+
+		//Get spectrum for left and right stereo channels
+		m_musicChannel->getSpectrum(m_spectrumLeft, SPECTRUM_SIZE, 0, FMOD_DSP_FFT_WINDOW_RECT);
+		m_musicChannel->getSpectrum(m_spectrumRight, SPECTRUM_SIZE, 0, FMOD_DSP_FFT_WINDOW_RECT);
+
+		//Print the first audio spectrum for both left and right channels
+		std::cout << m_spectrumLeft[0] << ", " << m_spectrumRight[0] << std::endl;
+	}
 
 	void init()
 	{
@@ -218,7 +377,8 @@ public:
 		loadPNG("../media/Retina.png", mTextureID[0]);
 		loadPNG("../media/IronOre.png", mTextureID[1]);
 		
-		wave.init(mTextureID[0], 0.01f, 0.05f, 5.0f, 5.0f, 10);
+		wave.init(mTextureID[0], 0.01f, 0.05f, 5.0f, 4.0f, 64);
+		initFmod();
 	}
 
 	void deinit()
@@ -626,7 +786,10 @@ public:
 		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Show Wireframes
 
-		wave.animate();
+		updateFmod();
+
+		//wave.animate();
+		wave.drawAudioVisualizer();
 
 		//glDisable(GL_BLEND);
 		//glDisable(GL_ALPHA_TEST);
