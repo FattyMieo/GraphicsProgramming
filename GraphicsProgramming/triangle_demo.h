@@ -16,6 +16,17 @@ private:
 	//GLfloat mRectVertices[RECT_VERTEX_ARRAY_SIZE];
 	float delta = 0.0f;
 
+	float halfSize = 0.0f;
+	float inc = 0.0f;
+
+	int qVertices = 0;		// Vertices per quad (Quad)
+	int qxVertices = 0;		// Vertices per row of quads (Row)
+	int qxzVertices = 0;	// Vertices per col of row of quads (Plane)
+
+	GLfloat *vertices;
+	GLubyte *colors;
+	GLfloat *texCoords;
+
 	float getY(float j)
 	{
 		return amplitude * sinf(delta + (j * frequency));
@@ -27,44 +38,130 @@ public:
 	float frequency;
 	float size;
 	int iterationPerUnit;
+	GLuint textureID;
 
-	Wave(float speed, float amplitude, float frequency, float size = 1.0f, int iterationPerMeter = 10)
+	void init(GLuint textureID, float speed, float amplitude, float frequency, float size = 1.0f, int iterationPerMeter = 10)
 	{
+		this->textureID = textureID;
 		this->speed = speed;
 		this->amplitude = amplitude;
 		this->frequency = frequency;
 		this->size = size;
 		this->iterationPerUnit = iterationPerMeter;
+
+		//Setup values
+		halfSize = size / 2.0f;
+		inc = 1.0f / iterationPerMeter;
+		qVertices = 18;
+		qxVertices = (int)(size * iterationPerUnit * qVertices);
+		qxzVertices = (int)(size * iterationPerUnit * qxVertices);
+
+		vertices = new GLfloat[qxzVertices];
+		colors = new GLubyte[qxzVertices];
+		//texCoords = new GLfloat[qxzVertices / 3 * 2];
+		texCoords = new GLfloat[qxzVertices];
 	}
 
 	void draw()
 	{
-		float halfSize = size / 2.0f;
-		float increment = 1.0f / iterationPerUnit;
+		glEnable(GL_TEXTURE_2D); //Enable texturing
+		glBindTexture(GL_TEXTURE_2D, textureID);
 
-		for (float i = -halfSize; i < halfSize - increment; i += increment)
+		for (int i = 0; i < size * iterationPerUnit; i++)
 		{
-			for (float j = -halfSize; j < halfSize - increment; j += increment)
+			float z = -halfSize + (inc * i);
+			for (int j = 0; j < size * iterationPerUnit; j++)
 			{
-				glBegin(GL_TRIANGLES);
+				float x = -halfSize + (inc * j);
 
-				glVertex3f(j, getY(j), i);
-				glVertex3f(j, getY(j), i + increment);
-				glVertex3f(j + increment, getY(j + increment), i);
+				GLfloat quadVertices[] =
+				{
+					x		, getY(x)		, z			,
+					x		, getY(x)		, z + inc	,
+					x + inc	, getY(x + inc)	, z			,
 
-				glVertex3f(j + increment, getY(j + increment), i + increment);
-				glVertex3f(j + increment, getY(j + increment), i);
-				glVertex3f(j, getY(j), i + increment);
+					x + inc	, getY(x + inc)	, z + inc	,
+					x + inc	, getY(x + inc)	, z			,
+					x		, getY(x)		, z + inc	
+				};
 
-				glEnd();
+				GLubyte quadColors[] =
+				{
+					255, 255, 255,
+					255, 0, 0,
+					0, 255, 0,
+
+					0, 255, 0,
+					255, 0, 0,
+					255, 255, 255,
+
+					255, 255, 255,
+					255, 0, 0,
+					0, 255, 0,
+
+					0, 255, 0,
+					255, 0, 0,
+					255, 255, 255
+				};
+
+				GLfloat quadTexCoords[] =
+				{
+					1.0f, 1.0f,
+					1.0f, 0.0f,
+					0.0f, 0.0f,
+
+					0.0f, 0.0f,
+					0.0f, 1.0f,
+					1.0f, 1.0f,
+
+					1.0f, 1.0f,
+					1.0f, 0.0f,
+					0.0f, 0.0f,
+
+					0.0f, 0.0f,
+					0.0f, 1.0f,
+					1.0f, 1.0f
+				};
+
+				for (int k = 0; k < 18; k++)
+				{
+					int l = (i * qxVertices) + (j * qVertices) + k;
+					vertices[l] = quadVertices[k];
+					colors[l] = quadColors[k];
+				}
+
+				for(int k = 0; k < 12; k++)
+				{
+					int l = (i * qxVertices) + (j * qVertices) + k;
+					texCoords[l] = quadTexCoords[k];
+				}
 			}
 		}
+
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		glEnableClientState(GL_COLOR_ARRAY);
+
+		glVertexPointer(3, GL_FLOAT, 0, vertices);
+		glColorPointer(3, GL_UNSIGNED_BYTE, 0, colors);
+		glTexCoordPointer(2, GL_FLOAT, 0, texCoords);
+		glDrawArrays(GL_TRIANGLES, 0, qxzVertices / 3);
+
+		glDisableClientState(GL_VERTEX_ARRAY);
+		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+		glDisableClientState(GL_COLOR_ARRAY);
+
+		glDisable(GL_TEXTURE_2D); //Disable texturing
 	}
 
 	void animate()
 	{
 		delta += speed;
-		std::cout << "Delta = " << delta << std::endl;
+		if (delta >= 2.0f * PI)
+		{
+			delta -= 2.0f * PI;
+		}
+		//std::cout << "Delta = " << delta << std::endl;
 		draw();
 	}
 };
@@ -108,6 +205,8 @@ private:
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, &image[0]);
 	}
 public:
+	Wave wave;
+
 	void init()
 	{
 		// To support alpha channel
@@ -118,6 +217,8 @@ public:
 		glGenTextures(TEXTURE_COUNT, mTextureID);
 		loadPNG("../media/Retina.png", mTextureID[0]);
 		loadPNG("../media/IronOre.png", mTextureID[1]);
+		
+		wave.init(mTextureID[0], 0.01f, 0.05f, 5.0f, 5.0f, 10);
 	}
 
 	void deinit()
@@ -517,15 +618,13 @@ public:
 		glEnd();										// Finished Drawing The Triangles
 	}
 
-	Wave wave = Wave(0.01f, 0.05f, 5.0f, 10.0f, 10);
-
 	void draw(const Matrix& viewMatrix)
 	{
 		drawAxis(viewMatrix);
 
 		glLoadMatrixf((GLfloat*)viewMatrix.mVal);
 		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Show Wireframes
+		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Show Wireframes
 
 		wave.animate();
 
