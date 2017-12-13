@@ -7,7 +7,8 @@
 #include "matrix.h"
 #include "vector.h"
 
-#include "triangle_demo.h"
+//#include "triangle_demo.h"
+#include "AudioVisualizer.h"
 
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 600
@@ -78,6 +79,8 @@ int main()
 	glfwSetCursorPosCallback(window, onMouseMove);
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
+	glfwSwapInterval(1);
+
 	// initialize OpenGL.
 	glShadeModel(GL_SMOOTH);							// Enable Smooth Shading
 	glClearColor(0.0f, 0.0f, 0.0f, 0.5f);				// Black Background
@@ -92,7 +95,8 @@ int main()
 	Matrix rotateMatrix(Matrix::makeRotateMatrix(0.5f, Vector(0.0f, 1.0f, 0.0f)));
 
 	// initialize demo.
-	DemoBase* demo = new TriangleDemo();
+	DemoBase* demo = new AudioVisualizer();
+	demo->setWindow(window);
 	demo->init();
 
 	// Main loop
